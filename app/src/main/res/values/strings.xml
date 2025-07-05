@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Emergency App 2</string>
+    <string name="Maps_key">${MAPS_API_KEY}</string>
+    <string name="default_web_client_id">788813906068-vc4kdtc4tgddbja1gufa8jufa71prv48.apps.googleusercontent.com</string>
+</resources>
