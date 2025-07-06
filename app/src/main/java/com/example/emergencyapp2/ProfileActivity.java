@@ -174,6 +174,18 @@ public class ProfileActivity extends AppCompatActivity implements EmergencyConta
     }
 
     private void saveUserProfile() {
+        String newName = newContactNameEditText.getText().toString().trim();
+        String newNumber = newContactNumberEditText.getText().toString().trim();
+
+        // If both fields have text, add the contact to our list automatically
+        if (!newName.isEmpty() && !newNumber.isEmpty()) {
+            emergencyContactList.add(new EmergencyContact(newName, newNumber));
+            contactsAdapter.notifyItemInserted(emergencyContactList.size() - 1);
+            // Clear the fields so it doesn't get added again
+            newContactNameEditText.setText("");
+            newContactNumberEditText.setText("");
+        }
+
         Map<String, Object> updatedData = new HashMap<>();
         updatedData.put("username", username.getText().toString().trim());
         updatedData.put("contact", contact.getText().toString().trim());
@@ -209,6 +221,9 @@ public class ProfileActivity extends AppCompatActivity implements EmergencyConta
         newContactNameEditText.setEnabled(enable);
         newContactNumberEditText.setEnabled(enable);
         addContactButton.setEnabled(enable);
+        if (contactsAdapter != null) {
+            contactsAdapter.setEditMode(enable);
+        }
 
         findViewById(R.id.addContactLabel).setVisibility(enable ? View.VISIBLE : View.GONE);
         newContactNameLayout.setVisibility(enable ? View.VISIBLE : View.GONE);
