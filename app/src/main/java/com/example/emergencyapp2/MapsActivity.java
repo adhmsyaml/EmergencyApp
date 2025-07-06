@@ -48,6 +48,8 @@ import okhttp3.Response;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
+import com.example.emergencyapp2.EmergencyContact;
+
 import android.telephony.SmsManager;
 import android.util.Log;
 
@@ -64,6 +66,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private GoogleMap mMap;
     private FirebaseAuth mAuth;
+    private FirebaseFirestore db;
     private static final float DEFAULT_ZOOM = 15f;
 
     // For Location
@@ -90,6 +93,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         // --- Firebase Auth Check ---
         mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
         if (mAuth.getCurrentUser() == null) {
             startActivity(new Intent(MapsActivity.this, LoginActivity.class));
             finish();
@@ -409,37 +413,47 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .show();
     }
 
+// In MapsActivity.java
+
     private void showCallDialog() {
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
         String userId = mAuth.getCurrentUser().getUid();
 
         db.collection("users").document(userId).get().addOnSuccessListener(documentSnapshot -> {
             if (documentSnapshot.exists()) {
-                String emergencyContactsStr = documentSnapshot.getString("emergencyContacts");
-                if (emergencyContactsStr != null && !emergencyContactsStr.trim().isEmpty()) {
+                // Fetch the data as a List of Maps
+                List<Object> contactsData = (List<Object>) documentSnapshot.get("emergencyContacts");
 
-                    // Split the string by newline characters and filter out empty entries.
-                    String[] rawContacts = emergencyContactsStr.split("\n");
-                    List<String> contactList = new ArrayList<>();
-                    for (String contact : rawContacts) {
-                        String trimmedContact = contact.trim();
-                        if (!trimmedContact.isEmpty()) {
-                            contactList.add(trimmedContact);
+                if (contactsData != null && !contactsData.isEmpty()) {
+                    List<String> contactNames = new ArrayList<>();
+                    List<String> contactNumbers = new ArrayList<>();
+
+                    // Iterate through the list of maps and extract name and number
+                    for (Object item : contactsData) {
+                        if (item instanceof java.util.Map) {
+                            java.util.Map<String, String> contactMap = (java.util.Map<String, String>) item;
+                            String name = contactMap.get("name");
+                            String number = contactMap.get("number");
+
+                            if (name != null && number != null) {
+                                contactNames.add(name);
+                                contactNumbers.add(number);
+                            }
                         }
                     }
 
-                    if (contactList.isEmpty()) {
+                    if (contactNames.isEmpty()) {
                         Toast.makeText(this, "No valid emergency contacts found.", Toast.LENGTH_LONG).show();
                         return;
                     }
 
-                    final String[] contacts = contactList.toArray(new String[0]);
+                    // Convert the list of names to an array for the dialog
+                    final CharSequence[] namesArray = contactNames.toArray(new CharSequence[0]);
 
                     AlertDialog.Builder builder = new AlertDialog.Builder(this);
                     builder.setTitle("Choose a contact to call");
-                    builder.setItems(contacts, (dialog, which) -> {
-                        // The number to call is now correctly isolated.
-                        String numberToCall = contacts[which];
+                    builder.setItems(namesArray, (dialog, which) -> {
+                        // Use the index 'which' to get the correct number from the numbers list
+                        String numberToCall = contactNumbers.get(which);
                         Intent dialIntent = new Intent(Intent.ACTION_DIAL);
                         dialIntent.setData(Uri.parse("tel:" + numberToCall));
                         startActivity(dialIntent);
@@ -458,52 +472,64 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void sendSosMessage() {
         if (lastKnownLocation == null) {
-            Toast.makeText(this, "Cannot get current location for SOS. Please wait.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Cannot get current location for SOS message.", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
         String userId = mAuth.getCurrentUser().getUid();
-
         db.collection("users").document(userId).get().addOnSuccessListener(documentSnapshot -> {
             if (documentSnapshot.exists()) {
-                String userName = documentSnapshot.getString("username");
-                String emergencyContactsStr = documentSnapshot.getString("emergencyContacts");
+                // 1. Deserialize the DocumentSnapshot into a User object.
+                User user = documentSnapshot.toObject(User.class);
 
-                if (emergencyContactsStr != null && !emergencyContactsStr.trim().isEmpty()) {
-                    // Prepare the message
-                    String locationLink = "https://maps.google.com/maps?q=" + lastKnownLocation.getLatitude() + "," + lastKnownLocation.getLongitude();
-                    String message = "EMERGENCY SOS from " + (userName != null ? userName : "a user") + "! My current location is: " + locationLink;
-
-                    // Since WhatsApp intents can only be sent to one number at a time,
-                    // we will open WhatsApp and let the user choose the contact.
-                    // The message will be pre-filled.
-                    try {
-                        Intent whatsappIntent = new Intent(Intent.ACTION_SEND);
-                        whatsappIntent.setType("text/plain");
-                        whatsappIntent.setPackage("com.whatsapp"); // Target WhatsApp specifically
-                        whatsappIntent.putExtra(Intent.EXTRA_TEXT, message);
-
-                        // Verify that WhatsApp is installed before launching
-                        if (whatsappIntent.resolveActivity(getPackageManager()) != null) {
-                            Toast.makeText(this, "Opening WhatsApp. Please select your emergency contact.", Toast.LENGTH_LONG).show();
-                            startActivity(whatsappIntent);
-                        } else {
-                            Toast.makeText(this, "WhatsApp is not installed.", Toast.LENGTH_SHORT).show();
-                        }
-
-                    } catch (Exception e) {
-                        Log.e("SOS_WHATSAPP", "Error creating WhatsApp intent", e);
-                        Toast.makeText(this, "Could not open WhatsApp.", Toast.LENGTH_SHORT).show();
-                    }
-
-                } else {
+                // 2. Get the list of contacts from the User object.
+                //    Add null checks for safety.
+                if (user == null || user.getEmergencyContacts() == null || user.getEmergencyContacts().isEmpty()) {
                     Toast.makeText(this, "No emergency contacts found in your profile.", Toast.LENGTH_LONG).show();
+                    return;
                 }
+
+                List<EmergencyContact> contacts = user.getEmergencyContacts();
+
+                // Create a list of names to display in the dialog
+                List<String> contactDisplayNames = new ArrayList<>();
+                for (EmergencyContact contact : contacts) {
+                    contactDisplayNames.add(contact.getName() + " (" + contact.getNumber() + ")");
+                }
+
+                // Show a dialog to let the user choose which contact to message
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle("Choose a contact to message")
+                        .setItems(contactDisplayNames.toArray(new CharSequence[0]), (dialog, which) -> {
+                            // Get the selected contact's number
+                            String number = contacts.get(which).getNumber();
+                            // Ensure the number is in the correct format for WhatsApp (e.g., +60123456789)
+                            if (number.startsWith("0")) {
+                                number = "+60" + number.substring(1);
+                            }
+                            number = number.replaceAll("[\\s-]", ""); // Remove spaces and hyphens
+
+                            String message = "SOS! I need help. My current location is: " +
+                                    "http://maps.google.com/maps?q=" +
+                                    lastKnownLocation.getLatitude() + "," +
+                                    lastKnownLocation.getLongitude();
+
+                            Intent sendIntent = new Intent(Intent.ACTION_VIEW);
+                            sendIntent.setData(Uri.parse("https://api.whatsapp.com/send?phone=" + number + "&text=" + Uri.encode(message)));
+
+                            try {
+                                startActivity(sendIntent);
+                            } catch (android.content.ActivityNotFoundException ex) {
+                                Toast.makeText(this, "WhatsApp is not installed.", Toast.LENGTH_SHORT).show();
+                            }
+                        })
+                        .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                        .show();
+            } else {
+                Toast.makeText(this, "User profile not found.", Toast.LENGTH_SHORT).show();
             }
         }).addOnFailureListener(e -> {
-            Log.e("SOS_FIRESTORE", "Failed to retrieve profile data", e);
-            Toast.makeText(this, "Failed to retrieve profile data.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Failed to load contacts: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         });
     }
 

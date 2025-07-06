@@ -21,10 +21,13 @@ import java.util.List;
 import java.util.Map;
 import android.widget.ImageButton;
 import androidx.appcompat.app.AlertDialog;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import java.util.ArrayList;
+import com.google.android.material.textfield.TextInputLayout;
 
-public class ProfileActivity extends AppCompatActivity {
-
-    private TextInputEditText username, contact, address, medicalNotes, emergencyContacts;
+public class ProfileActivity extends AppCompatActivity implements EmergencyContactsAdapter.OnContactDeleteListener {
+    private TextInputEditText username, contact, address, medicalNotes;
     private Spinner bloodTypeSpinner; // Changed from EditText
     private Button logoutButton, editProfileButton, saveProfileButton;
     private FirebaseAuth mAuth;
@@ -32,6 +35,12 @@ public class ProfileActivity extends AppCompatActivity {
     private DocumentReference userDocRef;
     private ArrayAdapter<String> bloodTypeAdapter;
     private ImageButton contactsInfoButton;
+    private RecyclerView contactsRecyclerView;
+    private TextInputEditText newContactNameEditText, newContactNumberEditText;
+    private TextInputLayout newContactNameLayout, newContactNumberLayout;
+    private Button addContactButton;
+    private EmergencyContactsAdapter contactsAdapter;
+    private List<EmergencyContact> emergencyContactList = new ArrayList<>();
 
 
     @Override
@@ -47,12 +56,16 @@ public class ProfileActivity extends AppCompatActivity {
         contact = findViewById(R.id.profileContact);
         address = findViewById(R.id.profileAddress);
         medicalNotes = findViewById(R.id.profileMedicalNotes);
-        emergencyContacts = findViewById(R.id.profileEmergencyContacts);
         bloodTypeSpinner = findViewById(R.id.profileBloodTypeSpinner); // New Spinner
         logoutButton = findViewById(R.id.logoutButton);
         editProfileButton = findViewById(R.id.editProfileButton);
         saveProfileButton = findViewById(R.id.saveProfileButton);
-        contactsInfoButton = findViewById(R.id.contactsInfoButton);
+        contactsRecyclerView = findViewById(R.id.contactsRecyclerView);
+        newContactNameEditText = findViewById(R.id.newContactNameEditText);
+        newContactNumberEditText = findViewById(R.id.newContactNumberEditText);
+        addContactButton = findViewById(R.id.addContactButton);
+        newContactNameLayout = findViewById(R.id.newContactNameLayout);
+        newContactNumberLayout = findViewById(R.id.newContactNumberLayout);
 
 
         // Setup Blood Type Spinner
@@ -62,11 +75,44 @@ public class ProfileActivity extends AppCompatActivity {
         logoutButton.setOnClickListener(v -> logoutUser());
         editProfileButton.setOnClickListener(v -> toggleEditMode(true));
         saveProfileButton.setOnClickListener(v -> saveUserProfile());
-        contactsInfoButton.setOnClickListener(v -> showContactsInfoDialog());
+        addContactButton.setOnClickListener(v -> addContact());
+        setupRecyclerView(); // Call a new method to set up the list
 
         loadUserProfile();
 
         toggleEditMode(false);
+    }
+
+    private void setupRecyclerView() {
+        contactsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        // The 'this' refers to the OnContactDeleteListener that the activity now implements
+        contactsAdapter = new EmergencyContactsAdapter(emergencyContactList, this);
+        contactsRecyclerView.setAdapter(contactsAdapter);
+    }
+    private void addContact() {
+        String name = newContactNameEditText.getText().toString().trim();
+        String number = newContactNumberEditText.getText().toString().trim();
+
+        if (name.isEmpty() || number.isEmpty()) {
+            Toast.makeText(this, "Please enter both name and number", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        emergencyContactList.add(new EmergencyContact(name, number));
+        // Notify the adapter that a new item was inserted at the end of the list
+        contactsAdapter.notifyItemInserted(emergencyContactList.size() - 1);
+
+        // Clear the input fields for the next entry
+        newContactNameEditText.setText("");
+        newContactNumberEditText.setText("");
+        newContactNameEditText.requestFocus();
+    }
+
+    @Override
+    public void onContactDelete(int position) {
+        emergencyContactList.remove(position);
+        contactsAdapter.notifyItemRemoved(position);
+        Toast.makeText(this, "Contact removed", Toast.LENGTH_SHORT).show();
     }
 
     private void showContactsInfoDialog() {
@@ -99,7 +145,17 @@ public class ProfileActivity extends AppCompatActivity {
                     contact.setText(documentSnapshot.getString("contact"));
                     address.setText(documentSnapshot.getString("address"));
                     medicalNotes.setText(documentSnapshot.getString("medicalNotes"));
-                    emergencyContacts.setText(documentSnapshot.getString("emergencyContacts"));
+                    emergencyContactList.clear(); // Clear the list before loading
+                    List<Map<String, Object>> contactsFromDb = (List<Map<String, Object>>) documentSnapshot.get("emergencyContacts");
+                    if (contactsFromDb != null) {
+                        for (Map<String, Object> contactMap : contactsFromDb) {
+                            emergencyContactList.add(new EmergencyContact(
+                                    (String) contactMap.get("name"),
+                                    (String) contactMap.get("number")
+                            ));
+                        }
+                    }
+                    contactsAdapter.notifyDataSetChanged(); // Refresh the entire list view
 
                     // Set spinner selection based on saved data
                     String savedBloodType = documentSnapshot.getString("bloodType");
@@ -123,8 +179,7 @@ public class ProfileActivity extends AppCompatActivity {
         updatedData.put("contact", contact.getText().toString().trim());
         updatedData.put("address", address.getText().toString().trim());
         updatedData.put("medicalNotes", medicalNotes.getText().toString().trim());
-        updatedData.put("emergencyContacts", emergencyContacts.getText().toString().trim());
-
+        updatedData.put("emergencyContacts", emergencyContactList);
         // Get data from spinner
         String selectedBloodType = "";
         if (bloodTypeSpinner.getSelectedItemPosition() > 0) { // Check if a real blood type is selected
@@ -149,8 +204,16 @@ public class ProfileActivity extends AppCompatActivity {
         contact.setEnabled(enable);
         address.setEnabled(enable);
         medicalNotes.setEnabled(enable);
-        emergencyContacts.setEnabled(enable);
         bloodTypeSpinner.setEnabled(enable);
+        contactsRecyclerView.setEnabled(enable);
+        newContactNameEditText.setEnabled(enable);
+        newContactNumberEditText.setEnabled(enable);
+        addContactButton.setEnabled(enable);
+
+        findViewById(R.id.addContactLabel).setVisibility(enable ? View.VISIBLE : View.GONE);
+        newContactNameLayout.setVisibility(enable ? View.VISIBLE : View.GONE);
+        newContactNumberLayout.setVisibility(enable ? View.VISIBLE : View.GONE);
+        addContactButton.setVisibility(enable ? View.VISIBLE : View.GONE);
 
         if (enable) {
             saveProfileButton.setVisibility(View.VISIBLE);

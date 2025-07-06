@@ -48,43 +48,69 @@
             <com.google.android.material.textfield.TextInputEditText android:id="@+id/profileMedicalNotes" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Medical Notes (Allergies, etc.)" android:enabled="false"/>
         </com.google.android.material.textfield.TextInputLayout>
 
-        <LinearLayout
+        <!-- This is the new UI for managing a list of contacts -->
+        <TextView
+            android:id="@+id/emergencyContactsLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Emergency Contacts"
+            android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+        <!-- RecyclerView will display the list of saved contacts -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/contactsRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="4dp">
+            android:minHeight="120dp"
+            android:layout_marginTop="8dp"
+            android:padding="4dp" /> <!-- Optional: Add a border -->
 
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Emergency Contacts"
-                android:layout_marginStart="4dp"/>
-
-            <ImageButton
-                android:id="@+id/contactsInfoButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@android:drawable/ic_dialog_info"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Info" />
-        </LinearLayout>
+        <!-- These fields are for adding a new contact -->
+        <TextView
+            android:id="@+id/addContactLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Add New Contact"
+            android:textAppearance="?attr/textAppearanceTitleMedium" />
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:id="@+id/newContactNameLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp">
+            android:layout_marginTop="8dp">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/profileEmergencyContacts"
+                android:id="@+id/newContactNameEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Enter one contact per line"
-                android:inputType="textMultiLine"  android:gravity="top"
-                android:lines="3"                  android:enabled="false"/>
+                android:hint="Contact Name"
+                android:inputType="textPersonName" />
         </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/newContactNumberLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/newContactNumberEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Contact Number"
+                android:inputType="phone" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:id="@+id/addContactButton"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginTop="8dp"
+            android:text="Add Contact" />
 
         <LinearLayout
             android:layout_width="match_parent"
