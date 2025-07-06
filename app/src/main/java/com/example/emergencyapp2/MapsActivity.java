@@ -478,61 +478,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return;
         }
 
-        String userId = mAuth.getCurrentUser().getUid();
-        db.collection("users").document(userId).get().addOnSuccessListener(documentSnapshot -> {
-            if (documentSnapshot.exists()) {
-                // 1. Deserialize the DocumentSnapshot into a User object.
-                User user = documentSnapshot.toObject(User.class);
+        // 1. Construct the SOS message with the location link.
+        String message = "SOS! I need help. My current location is: " +
+                "http://maps.google.com/maps?q=" +
+                lastKnownLocation.getLatitude() + "," +
+                lastKnownLocation.getLongitude();
 
-                // 2. Get the list of contacts from the User object.
-                //    Add null checks for safety.
-                if (user == null || user.getEmergencyContacts() == null || user.getEmergencyContacts().isEmpty()) {
-                    Toast.makeText(this, "No emergency contacts found in your profile.", Toast.LENGTH_LONG).show();
-                    return;
-                }
+        // 2. Create an Intent to share plain text.
+        Intent sendIntent = new Intent();
+        sendIntent.setAction(Intent.ACTION_SEND);
+        sendIntent.putExtra(Intent.EXTRA_TEXT, message);
+        sendIntent.setType("text/plain");
 
-                List<EmergencyContact> contacts = user.getEmergencyContacts();
+        // 3. Specifically target WhatsApp to avoid the system's share sheet.
+        sendIntent.setPackage("com.whatsapp");
 
-                // Create a list of names to display in the dialog
-                List<String> contactDisplayNames = new ArrayList<>();
-                for (EmergencyContact contact : contacts) {
-                    contactDisplayNames.add(contact.getName() + " (" + contact.getNumber() + ")");
-                }
-
-                // Show a dialog to let the user choose which contact to message
-                new MaterialAlertDialogBuilder(this)
-                        .setTitle("Choose a contact to message")
-                        .setItems(contactDisplayNames.toArray(new CharSequence[0]), (dialog, which) -> {
-                            // Get the selected contact's number
-                            String number = contacts.get(which).getNumber();
-                            // Ensure the number is in the correct format for WhatsApp (e.g., +60123456789)
-                            if (number.startsWith("0")) {
-                                number = "+60" + number.substring(1);
-                            }
-                            number = number.replaceAll("[\\s-]", ""); // Remove spaces and hyphens
-
-                            String message = "SOS! I need help. My current location is: " +
-                                    "http://maps.google.com/maps?q=" +
-                                    lastKnownLocation.getLatitude() + "," +
-                                    lastKnownLocation.getLongitude();
-
-                            Intent sendIntent = new Intent(Intent.ACTION_VIEW);
-                            sendIntent.setData(Uri.parse("https://api.whatsapp.com/send?phone=" + number + "&text=" + Uri.encode(message)));
-
-                            try {
-                                startActivity(sendIntent);
-                            } catch (android.content.ActivityNotFoundException ex) {
-                                Toast.makeText(this, "WhatsApp is not installed.", Toast.LENGTH_SHORT).show();
-                            }
-                        })
-                        .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
-                        .show();
-            } else {
-                Toast.makeText(this, "User profile not found.", Toast.LENGTH_SHORT).show();
-            }
-        }).addOnFailureListener(e -> {
-            Toast.makeText(this, "Failed to load contacts: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        });
+        // 4. Launch the intent and handle the case where WhatsApp isn't installed.
+        try {
+            startActivity(sendIntent);
+        } catch (android.content.ActivityNotFoundException ex) {
+            Toast.makeText(this, "WhatsApp is not installed.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     // --- Helper classes for parsing Places API JSON response ---
