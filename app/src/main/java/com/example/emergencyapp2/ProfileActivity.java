@@ -8,6 +8,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -32,10 +34,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import com.google.android.material.textfield.TextInputLayout;
 import android.widget.AdapterView;
+import android.app.DatePickerDialog;
+import java.util.Calendar;
 
 public class ProfileActivity extends AppCompatActivity implements EmergencyContactsAdapter.OnContactDeleteListener {
-    private TextInputEditText username, contact, address, medicalNotes;
-    private Spinner bloodTypeSpinner; // Changed from EditText
+    private TextInputEditText username, contact, address, medicalNotes, birthday;
+    private Spinner bloodTypeSpinner;
+    private RadioGroup genderRadioGroup;
+    private RadioButton radioMale, radioFemale;
     private Button logoutButton, editProfileButton, saveProfileButton;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
@@ -74,16 +80,24 @@ public class ProfileActivity extends AppCompatActivity implements EmergencyConta
         addContactButton = findViewById(R.id.addContactButton);
         newContactNameLayout = findViewById(R.id.newContactNameLayout);
         newContactNumberLayout = findViewById(R.id.newContactNumberLayout);
-
+        birthday = findViewById(R.id.profileBirthday);
+        genderRadioGroup = findViewById(R.id.profileGenderRadioGroup);
+        radioMale = findViewById(R.id.radioMale);
+        radioFemale = findViewById(R.id.radioFemale);
 
         // Setup Blood Type Spinner
         setupBloodTypeSpinner();
+        setupBirthdayPicker();
 
         // Setup button listeners
         logoutButton.setOnClickListener(v -> logoutUser());
         editProfileButton.setOnClickListener(v -> toggleEditMode(true));
         saveProfileButton.setOnClickListener(v -> saveUserProfile());
         addContactButton.setOnClickListener(v -> addContact());
+        genderRadioGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            isDataDirty = true;
+        });
+
         setupRecyclerView(); // Call a new method to set up the list
 
         loadUserProfile();
@@ -110,6 +124,7 @@ public class ProfileActivity extends AppCompatActivity implements EmergencyConta
         username.addTextChangedListener(textWatcher);
         contact.addTextChangedListener(textWatcher);
         address.addTextChangedListener(textWatcher);
+        birthday.addTextChangedListener(textWatcher);
         medicalNotes.addTextChangedListener(textWatcher);
         newContactNameEditText.addTextChangedListener(textWatcher);
         newContactNumberEditText.addTextChangedListener(textWatcher);
@@ -141,6 +156,27 @@ public class ProfileActivity extends AppCompatActivity implements EmergencyConta
                     finish();
                 }
             }
+        });
+    }
+
+    private void setupBirthdayPicker() {
+        birthday.setOnClickListener(v -> {
+            // Only show picker if in edit mode
+            if (!birthday.isEnabled()) return;
+
+            final Calendar c = Calendar.getInstance();
+            int year = c.get(Calendar.YEAR);
+            int month = c.get(Calendar.MONTH);
+            int day = c.get(Calendar.DAY_OF_MONTH);
+
+            DatePickerDialog datePickerDialog = new DatePickerDialog(
+                    ProfileActivity.this,
+                    (view, year1, monthOfYear, dayOfMonth) -> {
+                        String selectedDate = dayOfMonth + "/" + (monthOfYear + 1) + "/" + year1;
+                        birthday.setText(selectedDate);
+                    },
+                    year, month, day);
+            datePickerDialog.show();
         });
     }
 
@@ -238,6 +274,7 @@ public class ProfileActivity extends AppCompatActivity implements EmergencyConta
                 if (documentSnapshot.exists()) {
                     username.setText(documentSnapshot.getString("username"));
                     contact.setText(documentSnapshot.getString("contact"));
+                    birthday.setText(documentSnapshot.getString("birthday"));
                     address.setText(documentSnapshot.getString("address"));
                     medicalNotes.setText(documentSnapshot.getString("medicalNotes"));
                     emergencyContactList.clear(); // Clear the list before loading
@@ -259,6 +296,15 @@ public class ProfileActivity extends AppCompatActivity implements EmergencyConta
                         bloodTypeSpinner.setSelection(spinnerPosition);
                     } else {
                         bloodTypeSpinner.setSelection(0); // Default to "Select..."
+                    }
+
+                    String savedGender = documentSnapshot.getString("gender");
+                    if (savedGender != null) {
+                        if (savedGender.equals("Male")) {
+                            genderRadioGroup.check(R.id.radioMale);
+                        } else if (savedGender.equals("Female")) {
+                            genderRadioGroup.check(R.id.radioFemale);
+                        }
                     }
 
                 } else {
@@ -286,6 +332,7 @@ public class ProfileActivity extends AppCompatActivity implements EmergencyConta
         updatedData.put("contact", contact.getText().toString().trim());
         updatedData.put("address", address.getText().toString().trim());
         updatedData.put("medicalNotes", medicalNotes.getText().toString().trim());
+        updatedData.put("birthday", birthday.getText().toString().trim());
         updatedData.put("emergencyContacts", emergencyContactList);
         // Get data from spinner
         String selectedBloodType = "";
@@ -293,6 +340,15 @@ public class ProfileActivity extends AppCompatActivity implements EmergencyConta
             selectedBloodType = bloodTypeSpinner.getSelectedItem().toString();
         }
         updatedData.put("bloodType", selectedBloodType);
+
+        String selectedGender = "";
+        int selectedId = genderRadioGroup.getCheckedRadioButtonId();
+        if (selectedId == R.id.radioMale) {
+            selectedGender = "Male";
+        } else if (selectedId == R.id.radioFemale) {
+            selectedGender = "Female";
+        }
+        updatedData.put("gender", selectedGender); // Save gender
 
         userDocRef.set(updatedData, SetOptions.merge())
                 .addOnSuccessListener(aVoid -> {
@@ -312,8 +368,10 @@ public class ProfileActivity extends AppCompatActivity implements EmergencyConta
         contact.setEnabled(enable);
         address.setEnabled(enable);
         medicalNotes.setEnabled(enable);
+        birthday.setEnabled(enable);
         bloodTypeSpinner.setEnabled(enable);
-        contactsRecyclerView.setEnabled(enable);
+        radioMale.setEnabled(enable);
+        radioFemale.setEnabled(enable);        contactsRecyclerView.setEnabled(enable);
         newContactNameEditText.setEnabled(enable);
         newContactNumberEditText.setEnabled(enable);
         addContactButton.setEnabled(enable);
