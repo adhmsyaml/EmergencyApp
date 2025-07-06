@@ -4,6 +4,13 @@ plugins {
 }
 
 android {
+    def localProps = new Properties()
+    def localPropsFile = rootProject.file("local.properties")
+    if (localPropsFile.exists()) {
+        localProps.load(new FileInputStream(localPropsFile))
+    }
+    def mapsApiKey = localProps.getProperty("MAPS_API_KEY") ?: ""
+
     namespace 'com.example.emergencyapp2'
     compileSdk 36
 
@@ -15,6 +22,8 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        manifestPlaceholders = [API_KEY: mapsApiKey]
     }
 
     buildTypes {
