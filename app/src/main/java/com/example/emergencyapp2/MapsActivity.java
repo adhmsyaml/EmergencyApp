@@ -62,6 +62,15 @@ import android.widget.TextView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.example.emergencyapp2.User;
+import com.example.emergencyapp2.EmergencyContact;
+import java.util.ArrayList;
+import java.util.List;
+import android.content.Intent;
+import android.net.Uri;
+import android.widget.Toast;
+
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
@@ -420,50 +429,43 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         db.collection("users").document(userId).get().addOnSuccessListener(documentSnapshot -> {
             if (documentSnapshot.exists()) {
-                // Fetch the data as a List of Maps
-                List<Object> contactsData = (List<Object>) documentSnapshot.get("emergencyContacts");
+                // Deserialize the document into a User object, just like in the WhatsApp method
+                User user = documentSnapshot.toObject(User.class);
 
-                if (contactsData != null && !contactsData.isEmpty()) {
-                    List<String> contactNames = new ArrayList<>();
-                    List<String> contactNumbers = new ArrayList<>();
-
-                    // Iterate through the list of maps and extract name and number
-                    for (Object item : contactsData) {
-                        if (item instanceof java.util.Map) {
-                            java.util.Map<String, String> contactMap = (java.util.Map<String, String>) item;
-                            String name = contactMap.get("name");
-                            String number = contactMap.get("number");
-
-                            if (name != null && number != null) {
-                                contactNames.add(name);
-                                contactNumbers.add(number);
-                            }
-                        }
-                    }
-
-                    if (contactNames.isEmpty()) {
-                        Toast.makeText(this, "No valid emergency contacts found.", Toast.LENGTH_LONG).show();
-                        return;
-                    }
-
-                    // Convert the list of names to an array for the dialog
-                    final CharSequence[] namesArray = contactNames.toArray(new CharSequence[0]);
-
-                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                    builder.setTitle("Choose a contact to call");
-                    builder.setItems(namesArray, (dialog, which) -> {
-                        // Use the index 'which' to get the correct number from the numbers list
-                        String numberToCall = contactNumbers.get(which);
-                        Intent dialIntent = new Intent(Intent.ACTION_DIAL);
-                        dialIntent.setData(Uri.parse("tel:" + numberToCall));
-                        startActivity(dialIntent);
-                    });
-                    builder.show();
-
-                } else {
+                // Check if the user object or the contacts list is null/empty
+                if (user == null || user.getEmergencyContacts() == null || user.getEmergencyContacts().isEmpty()) {
                     Toast.makeText(this, "No emergency contacts found in your profile.", Toast.LENGTH_LONG).show();
+                    return;
                 }
+
+                List<EmergencyContact> contacts = user.getEmergencyContacts();
+
+                // Create a list of names and numbers to display in the dialog for consistency
+                List<String> contactDisplayNames = new ArrayList<>();
+                for (EmergencyContact contact : contacts) {
+                    contactDisplayNames.add(contact.getName() + " (" + contact.getNumber() + ")");
+                }
+
+                // Use MaterialAlertDialogBuilder for the same modern dialog style
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle("Choose a contact to call")
+                        .setItems(contactDisplayNames.toArray(new CharSequence[0]), (dialog, which) -> {
+                            // Get the selected contact's number
+                            String numberToCall = contacts.get(which).getNumber();
+
+                            // Create an Intent to open the dialer with the number
+                            Intent dialIntent = new Intent(Intent.ACTION_DIAL);
+                            dialIntent.setData(Uri.parse("tel:" + numberToCall));
+                            startActivity(dialIntent);
+                        })
+                        .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                        .show();
+
+            } else {
+                Toast.makeText(this, "User profile not found.", Toast.LENGTH_SHORT).show();
             }
+        }).addOnFailureListener(e -> {
+            Toast.makeText(this, "Failed to load contacts: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         });
     }
 
