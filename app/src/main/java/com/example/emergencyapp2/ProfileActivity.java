@@ -2,13 +2,19 @@ package com.example.emergencyapp2;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.Toast;
+
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -25,6 +31,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import com.google.android.material.textfield.TextInputLayout;
+import android.widget.AdapterView;
 
 public class ProfileActivity extends AppCompatActivity implements EmergencyContactsAdapter.OnContactDeleteListener {
     private TextInputEditText username, contact, address, medicalNotes;
@@ -41,6 +48,7 @@ public class ProfileActivity extends AppCompatActivity implements EmergencyConta
     private Button addContactButton;
     private EmergencyContactsAdapter contactsAdapter;
     private List<EmergencyContact> emergencyContactList = new ArrayList<>();
+    private boolean isDataDirty = false;
 
 
     @Override
@@ -81,6 +89,59 @@ public class ProfileActivity extends AppCompatActivity implements EmergencyConta
         loadUserProfile();
 
         toggleEditMode(false);
+
+        TextWatcher textWatcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // Not needed
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // Not needed
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                isDataDirty = true;
+            }
+        };
+
+        username.addTextChangedListener(textWatcher);
+        contact.addTextChangedListener(textWatcher);
+        address.addTextChangedListener(textWatcher);
+        medicalNotes.addTextChangedListener(textWatcher);
+        newContactNameEditText.addTextChangedListener(textWatcher);
+        newContactNumberEditText.addTextChangedListener(textWatcher);
+
+        // In ProfileActivity.java, at the end of onCreate()
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                // Check if we are in edit mode and if there are unsaved changes
+                boolean isInEditMode = editProfileButton.getVisibility() == View.GONE;
+
+                if (isInEditMode && isDataDirty) {
+                    // Show a confirmation dialog
+                    new MaterialAlertDialogBuilder(ProfileActivity.this)
+                            .setTitle("Discard Changes?")
+                            .setMessage("You have unsaved changes. Are you sure you want to go back?")
+                            .setNegativeButton("Cancel", (dialog, which) -> {
+                                // User wants to stay, so just dismiss the dialog
+                                dialog.dismiss();
+                            })
+                            .setPositiveButton("Discard", (dialog, which) -> {
+                                // User wants to discard, so finish the activity
+                                finish();
+                            })
+                            .show();
+                } else {
+                    // If not in edit mode or no changes, proceed with default back behavior
+                    finish();
+                }
+            }
+        });
     }
 
     private void setupRecyclerView() {
@@ -106,6 +167,7 @@ public class ProfileActivity extends AppCompatActivity implements EmergencyConta
         newContactNameEditText.setText("");
         newContactNumberEditText.setText("");
         newContactNameEditText.requestFocus();
+        isDataDirty = true;
     }
 
     @Override
@@ -113,6 +175,7 @@ public class ProfileActivity extends AppCompatActivity implements EmergencyConta
         emergencyContactList.remove(position);
         contactsAdapter.notifyItemRemoved(position);
         Toast.makeText(this, "Contact removed", Toast.LENGTH_SHORT).show();
+        isDataDirty = true;
     }
 
     private void showContactsInfoDialog() {
@@ -131,6 +194,24 @@ public class ProfileActivity extends AppCompatActivity implements EmergencyConta
         bloodTypeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         // Set the adapter to the spinner
         bloodTypeSpinner.setAdapter(bloodTypeAdapter);
+
+        bloodTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            private boolean isInitialSelection = true;
+
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (isInitialSelection) {
+                    isInitialSelection = false; // Ignore the first automatic selection
+                } else {
+                    isDataDirty = true; // Any subsequent user selection marks data as dirty
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Not needed
+            }
+        });
     }
 
     private void loadUserProfile() {
@@ -202,6 +283,7 @@ public class ProfileActivity extends AppCompatActivity implements EmergencyConta
         userDocRef.set(updatedData, SetOptions.merge())
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(ProfileActivity.this, "Profile Updated Successfully", Toast.LENGTH_SHORT).show();
+                    isDataDirty = false;
                     toggleEditMode(false);
                 })
                 .addOnFailureListener(e -> {
