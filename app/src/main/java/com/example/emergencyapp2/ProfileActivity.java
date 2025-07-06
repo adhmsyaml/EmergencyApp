@@ -19,6 +19,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import android.widget.ImageButton;
+import androidx.appcompat.app.AlertDialog;
 
 public class ProfileActivity extends AppCompatActivity {
 
@@ -29,6 +31,8 @@ public class ProfileActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private DocumentReference userDocRef;
     private ArrayAdapter<String> bloodTypeAdapter;
+    private ImageButton contactsInfoButton;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +52,8 @@ public class ProfileActivity extends AppCompatActivity {
         logoutButton = findViewById(R.id.logoutButton);
         editProfileButton = findViewById(R.id.editProfileButton);
         saveProfileButton = findViewById(R.id.saveProfileButton);
+        contactsInfoButton = findViewById(R.id.contactsInfoButton);
+
 
         // Setup Blood Type Spinner
         setupBloodTypeSpinner();
@@ -56,8 +62,19 @@ public class ProfileActivity extends AppCompatActivity {
         logoutButton.setOnClickListener(v -> logoutUser());
         editProfileButton.setOnClickListener(v -> toggleEditMode(true));
         saveProfileButton.setOnClickListener(v -> saveUserProfile());
+        contactsInfoButton.setOnClickListener(v -> showContactsInfoDialog());
 
         loadUserProfile();
+
+        toggleEditMode(false);
+    }
+
+    private void showContactsInfoDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Emergency Contacts Info")
+                .setMessage("• Enter one phone number per line.\n\n• You can use formats like 012-3456789 or +60123456789.")
+                .setPositiveButton("OK", null)
+                .show();
     }
 
     private void setupBloodTypeSpinner() {

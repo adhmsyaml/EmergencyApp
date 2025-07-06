@@ -48,18 +48,42 @@
             <com.google.android.material.textfield.TextInputEditText android:id="@+id/profileMedicalNotes" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Medical Notes (Allergies, etc.)" android:enabled="false"/>
         </com.google.android.material.textfield.TextInputLayout>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="4dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Emergency Contacts"
+                android:layout_marginStart="4dp"/>
+
+            <ImageButton
+                android:id="@+id/contactsInfoButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@android:drawable/ic_dialog_info"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Info" />
+        </LinearLayout>
+
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp">
+
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/profileEmergencyContacts"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Emergency Contacts (e.g., 012... , 019...)"
-                android:inputType="text"
-                android:enabled="false"/>
+                android:hint="Enter one contact per line"
+                android:inputType="textMultiLine"  android:gravity="top"
+                android:lines="3"                  android:enabled="false"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <LinearLayout

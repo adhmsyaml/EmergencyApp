@@ -53,6 +53,10 @@ import android.util.Log;
 
 import com.example.emergencyapp2.BuildConfig;
 
+import android.net.Uri;
+import android.view.View;
+import android.widget.TextView;
+
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
@@ -111,7 +115,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Button sosButton = findViewById(R.id.sosButton);
         sosButton.setOnClickListener(v -> Toast.makeText(MapsActivity.this, "Press and hold for 3 seconds to send SOS.", Toast.LENGTH_SHORT).show());
         sosButton.setOnLongClickListener(v -> {
-            sendSmsAlert();
+            showSosOptionsDialog();
             return true;
         });
 
@@ -138,7 +142,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         integrator.setCameraId(0);  // Use a specific camera of the device
         integrator.setBeepEnabled(true);
         integrator.setBarcodeImageEnabled(true);
-        integrator.setOrientationLocked(false);
+        integrator.setOrientationLocked(true);
         integrator.initiateScan();
     }
 
@@ -184,7 +188,55 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
 
+        mMap.setInfoWindowAdapter(new CustomInfoWindowAdapter());
+        mMap.setOnInfoWindowClickListener(new CustomInfoWindowClickListener());
+
         checkLocationPermission();
+    }
+
+    class CustomInfoWindowAdapter implements GoogleMap.InfoWindowAdapter {
+
+        private final View mWindow;
+
+        CustomInfoWindowAdapter() {
+            mWindow = getLayoutInflater().inflate(R.layout.custom_info_window, null);
+        }
+
+        @Override
+        public View getInfoWindow(Marker marker) {
+            TextView title = mWindow.findViewById(R.id.info_title);
+            title.setText(marker.getTitle());
+
+            TextView snippet = mWindow.findViewById(R.id.info_snippet);
+            snippet.setText(marker.getSnippet());
+
+            return mWindow;
+        }
+
+        @Override
+        public View getInfoContents(Marker marker) {
+            // This method is not used in this implementation
+            return null;
+        }
+    }
+
+    class CustomInfoWindowClickListener implements GoogleMap.OnInfoWindowClickListener {
+        @Override
+        public void onInfoWindowClick(Marker marker) {
+            // Create a URI for the navigation intent
+            Uri gmmIntentUri = Uri.parse("google.navigation:q=" + marker.getPosition().latitude + "," + marker.getPosition().longitude);
+
+            // Create an Intent to launch Google Maps
+            Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+            mapIntent.setPackage("com.google.android.apps.maps");
+
+            // Verify that the Google Maps app is installed before launching
+            if (mapIntent.resolveActivity(getPackageManager()) != null) {
+                startActivity(mapIntent);
+            } else {
+                Toast.makeText(MapsActivity.this, "Google Maps is not installed.", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     /**
@@ -305,67 +357,133 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    // --- SOS SMS Sending Logic ---
-    private void sendSmsAlert() {
-        // First, check for SMS permission
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SEND_SMS}, 101);
-            Toast.makeText(this, "SMS Permission is required to send SOS.", Toast.LENGTH_SHORT).show();
-            return; // Stop if permission is not granted
+    private void showSosOptionsDialog() {
+        // First, check if we have a location, as all options need it.
+        if (lastKnownLocation == null) {
+            Toast.makeText(this, "Cannot get current location. Please wait.", Toast.LENGTH_SHORT).show();
+            return;
         }
 
-        // Second, ensure we have a location
+        // Removed the "Send SMS Alert" option
+        final CharSequence[] options = {
+                "Send WhatsApp SOS",
+                "Call an Emergency Contact",
+                "Cancel"
+        };
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("SOS Options");
+        builder.setItems(options, (dialog, item) -> {
+            String selectedOption = options[item].toString();
+            if (selectedOption.equals("Send WhatsApp SOS")) {
+                // This calls your existing WhatsApp method
+                sendSosMessage();
+            } else if (selectedOption.equals("Call an Emergency Contact")) {
+                // This will call the updated method to show a list of contacts to call
+                showCallDialog();
+            } else if (selectedOption.equals("Cancel")) {
+                dialog.dismiss();
+            }
+        });
+        builder.show();
+    }
+
+    private void showCallDialog() {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        String userId = mAuth.getCurrentUser().getUid();
+
+        db.collection("users").document(userId).get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                String emergencyContactsStr = documentSnapshot.getString("emergencyContacts");
+                if (emergencyContactsStr != null && !emergencyContactsStr.trim().isEmpty()) {
+
+                    // Split the string by newline characters and filter out empty entries.
+                    String[] rawContacts = emergencyContactsStr.split("\n");
+                    List<String> contactList = new ArrayList<>();
+                    for (String contact : rawContacts) {
+                        String trimmedContact = contact.trim();
+                        if (!trimmedContact.isEmpty()) {
+                            contactList.add(trimmedContact);
+                        }
+                    }
+
+                    if (contactList.isEmpty()) {
+                        Toast.makeText(this, "No valid emergency contacts found.", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    final String[] contacts = contactList.toArray(new String[0]);
+
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                    builder.setTitle("Choose a contact to call");
+                    builder.setItems(contacts, (dialog, which) -> {
+                        // The number to call is now correctly isolated.
+                        String numberToCall = contacts[which];
+                        Intent dialIntent = new Intent(Intent.ACTION_DIAL);
+                        dialIntent.setData(Uri.parse("tel:" + numberToCall));
+                        startActivity(dialIntent);
+                    });
+                    builder.show();
+
+                } else {
+                    Toast.makeText(this, "No emergency contacts found in your profile.", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+    }
+
+    // --- SOS SMS Sending Logic ---
+// In MapsActivity.java
+
+    private void sendSosMessage() {
         if (lastKnownLocation == null) {
             Toast.makeText(this, "Cannot get current location for SOS. Please wait.", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Third, get profile data from Firestore
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         String userId = mAuth.getCurrentUser().getUid();
 
         db.collection("users").document(userId).get().addOnSuccessListener(documentSnapshot -> {
             if (documentSnapshot.exists()) {
                 String userName = documentSnapshot.getString("username");
-                // Assuming contacts are stored as a comma-separated string
                 String emergencyContactsStr = documentSnapshot.getString("emergencyContacts");
 
                 if (emergencyContactsStr != null && !emergencyContactsStr.trim().isEmpty()) {
-                    String locationLink = "http://maps.google.com/maps?q=" + lastKnownLocation.getLatitude() + "," + lastKnownLocation.getLongitude();
+                    // Prepare the message
+                    String locationLink = "https://maps.google.com/maps?q=" + lastKnownLocation.getLatitude() + "," + lastKnownLocation.getLongitude();
                     String message = "EMERGENCY SOS from " + (userName != null ? userName : "a user") + "! My current location is: " + locationLink;
 
-                    // Split the contacts string by commas
-                    String[] contactNumbers = emergencyContactsStr.split(",");
-                    int smsSentCount = 0;
+                    // Since WhatsApp intents can only be sent to one number at a time,
+                    // we will open WhatsApp and let the user choose the contact.
+                    // The message will be pre-filled.
+                    try {
+                        Intent whatsappIntent = new Intent(Intent.ACTION_SEND);
+                        whatsappIntent.setType("text/plain");
+                        whatsappIntent.setPackage("com.whatsapp"); // Target WhatsApp specifically
+                        whatsappIntent.putExtra(Intent.EXTRA_TEXT, message);
 
-                    for (String number : contactNumbers) {
-                        // **THIS IS THE CRUCIAL FIX**
-                        // Clean the number: remove all non-digit characters (+, -, spaces)
-                        String cleanNumber = number.trim().replaceAll("[^0-9]", "");
-
-                        if (!cleanNumber.isEmpty()) {
-                            try {
-                                SmsManager smsManager = SmsManager.getDefault();
-                                smsManager.sendTextMessage(cleanNumber, null, message, null, null);
-                                smsSentCount++;
-                                Log.d("SOS_SMS", "Successfully sent SMS to " + cleanNumber);
-                            } catch (Exception e) {
-                                Log.e("SOS_SMS", "Failed to send SMS to " + cleanNumber, e);
-                            }
+                        // Verify that WhatsApp is installed before launching
+                        if (whatsappIntent.resolveActivity(getPackageManager()) != null) {
+                            Toast.makeText(this, "Opening WhatsApp. Please select your emergency contact.", Toast.LENGTH_LONG).show();
+                            startActivity(whatsappIntent);
+                        } else {
+                            Toast.makeText(this, "WhatsApp is not installed.", Toast.LENGTH_SHORT).show();
                         }
-                    }
 
-                    if (smsSentCount > 0) {
-                        Toast.makeText(this, "SOS Alert sent to " + smsSentCount + " contact(s)!", Toast.LENGTH_LONG).show();
-                    } else {
-                        Toast.makeText(this, "Could not send SMS. Check contact numbers.", Toast.LENGTH_LONG).show();
+                    } catch (Exception e) {
+                        Log.e("SOS_WHATSAPP", "Error creating WhatsApp intent", e);
+                        Toast.makeText(this, "Could not open WhatsApp.", Toast.LENGTH_SHORT).show();
                     }
 
                 } else {
                     Toast.makeText(this, "No emergency contacts found in your profile.", Toast.LENGTH_LONG).show();
                 }
             }
-        }).addOnFailureListener(e -> Toast.makeText(this, "Failed to retrieve profile data.", Toast.LENGTH_SHORT).show());
+        }).addOnFailureListener(e -> {
+            Log.e("SOS_FIRESTORE", "Failed to retrieve profile data", e);
+            Toast.makeText(this, "Failed to retrieve profile data.", Toast.LENGTH_SHORT).show();
+        });
     }
 
     // --- Helper classes for parsing Places API JSON response ---
