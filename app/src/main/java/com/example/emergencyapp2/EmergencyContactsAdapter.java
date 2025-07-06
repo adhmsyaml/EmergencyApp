@@ -13,18 +13,23 @@ public class EmergencyContactsAdapter extends RecyclerView.Adapter<EmergencyCont
 
     private List<EmergencyContact> contacts;
     private OnContactDeleteListener deleteListener;
+    private OnContactEditListener editListener;
     private boolean isEditMode = false;
 
     public void setEditMode(boolean isEditing) {
         this.isEditMode = isEditing;
         notifyDataSetChanged(); // Refresh the entire list to show/hide buttons
     }
+    public interface OnContactEditListener {
+        void onContactEdit(int position);
+    }
     public interface OnContactDeleteListener {
         void onContactDelete(int position);
     }
-    public EmergencyContactsAdapter(List<EmergencyContact> contacts, OnContactDeleteListener listener) {
+    public EmergencyContactsAdapter(List<EmergencyContact> contacts, OnContactDeleteListener deleteListener, OnContactEditListener editListener) {
         this.contacts = contacts;
-        this.deleteListener = listener;
+        this.deleteListener = deleteListener;
+        this.editListener = editListener;
     }
 
     @NonNull
@@ -40,8 +45,9 @@ public class EmergencyContactsAdapter extends RecyclerView.Adapter<EmergencyCont
         holder.nameTextView.setText(contact.getName());
         holder.numberTextView.setText(contact.getNumber());
 
-        // 3. Set visibility based on the edit mode
+        // Set visibility for both buttons based on the edit mode
         holder.deleteButton.setVisibility(isEditMode ? View.VISIBLE : View.GONE);
+        holder.editButton.setVisibility(isEditMode ? View.VISIBLE : View.GONE);
     }
 
     @Override
@@ -57,18 +63,28 @@ public class EmergencyContactsAdapter extends RecyclerView.Adapter<EmergencyCont
         TextView nameTextView;
         TextView numberTextView;
         ImageButton deleteButton;
+        ImageButton editButton;
 
         public ContactViewHolder(@NonNull View itemView) {
             super(itemView);
             nameTextView = itemView.findViewById(R.id.contactNameTextView);
             numberTextView = itemView.findViewById(R.id.contactNumberTextView);
             deleteButton = itemView.findViewById(R.id.deleteContactButton);
+            editButton = itemView.findViewById(R.id.editContactButton);
 
             deleteButton.setOnClickListener(v -> {
                 if (deleteListener != null) {
                     int position = getAdapterPosition();
                     if (position != RecyclerView.NO_POSITION) {
                         deleteListener.onContactDelete(position);
+                    }
+                }
+            });
+            editButton.setOnClickListener(v -> {
+                if (editListener != null) {
+                    int pos = getAdapterPosition();
+                    if (pos != RecyclerView.NO_POSITION) {
+                        editListener.onContactEdit(pos);
                     }
                 }
             });

@@ -37,8 +37,7 @@ import android.widget.AdapterView;
 import android.app.DatePickerDialog;
 import java.util.Calendar;
 
-public class ProfileActivity extends AppCompatActivity implements EmergencyContactsAdapter.OnContactDeleteListener {
-    private TextInputEditText username, contact, address, medicalNotes, birthday;
+public class ProfileActivity extends AppCompatActivity implements EmergencyContactsAdapter.OnContactDeleteListener, EmergencyContactsAdapter.OnContactEditListener {    private TextInputEditText username, contact, address, medicalNotes, birthday;
     private Spinner bloodTypeSpinner;
     private RadioGroup genderRadioGroup;
     private RadioButton radioMale, radioFemale;
@@ -182,8 +181,8 @@ public class ProfileActivity extends AppCompatActivity implements EmergencyConta
 
     private void setupRecyclerView() {
         contactsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        // The 'this' refers to the OnContactDeleteListener that the activity now implements
-        contactsAdapter = new EmergencyContactsAdapter(emergencyContactList, this);
+        // Pass 'this' for both listeners
+        contactsAdapter = new EmergencyContactsAdapter(emergencyContactList, this, this);
         contactsRecyclerView.setAdapter(contactsAdapter);
     }
     private void addContact() {
@@ -205,7 +204,42 @@ public class ProfileActivity extends AppCompatActivity implements EmergencyConta
         newContactNameEditText.requestFocus();
         isDataDirty = true;
     }
+    @Override
+    public void onContactEdit(int position) {
+        // Inflate the custom dialog layout
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_edit_contact, null);
+        TextInputEditText editName = dialogView.findViewById(R.id.editContactName);
+        TextInputEditText editNumber = dialogView.findViewById(R.id.editContactNumber);
 
+        // Get the contact to be edited and pre-fill the fields
+        EmergencyContact contactToEdit = emergencyContactList.get(position);
+        editName.setText(contactToEdit.getName());
+        editNumber.setText(contactToEdit.getNumber());
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Edit Contact")
+                .setView(dialogView)
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Save", (dialog, which) -> {
+                    String newName = editName.getText().toString().trim();
+                    String newNumber = editNumber.getText().toString().trim();
+
+                    if (newName.isEmpty() || newNumber.isEmpty()) {
+                        Toast.makeText(this, "Name and number cannot be empty", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    // Update the contact in the list
+                    contactToEdit.setName(newName);
+                    contactToEdit.setNumber(newNumber);
+
+                    // Notify the adapter that this specific item has changed
+                    contactsAdapter.notifyItemChanged(position);
+                    isDataDirty = true; // Mark that a change has been made
+                    Toast.makeText(this, "Contact updated", Toast.LENGTH_SHORT).show();
+                })
+                .show();
+    }
     @Override
     public void onContactDelete(int position) {
         // Get the contact to show its name in the dialog for better context

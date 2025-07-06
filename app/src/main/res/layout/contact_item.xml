@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="16dp">
+    android:orientation="horizontal"
+    android:paddingVertical="8dp"
+    android:gravity="center_vertical">
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_alignParentStart="true"
-        android:layout_centerVertical="true"
-        android:layout_toStartOf="@id/deleteContactButton">
+        android:layout_weight="1"
+        android:orientation="vertical">
 
         <TextView
             android:id="@+id/contactNameTextView"
@@ -18,24 +18,37 @@
             android:layout_height="wrap_content"
             android:text="Contact Name"
             android:textSize="16sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:textColor="?android:attr/textColorPrimary" />
 
         <TextView
             android:id="@+id/contactNumberTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="012-3456789"
-            android:textSize="14sp"/>
+            android:text="Contact Number"
+            android:textSize="14sp"
+            android:textColor="?android:attr/textColorSecondary" />
     </LinearLayout>
 
+    <!-- Edit Button -->
+    <ImageButton
+        android:id="@+id/editContactButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@android:drawable/ic_menu_edit"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Edit Contact"
+        android:visibility="gone"
+        android:layout_marginEnd="8dp"/>
+
+    <!-- Delete Button -->
     <ImageButton
         android:id="@+id/deleteContactButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:src="@android:drawable/ic_menu_delete"
         android:background="?attr/selectableItemBackgroundBorderless"
-        android:layout_alignParentEnd="true"
-        android:layout_centerVertical="true"
-        android:contentDescription="Delete Contact"/>
+        android:contentDescription="Delete Contact"
+        android:visibility="gone"/>
 
-</RelativeLayout>
+</LinearLayout>
