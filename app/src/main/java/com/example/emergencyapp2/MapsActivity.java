@@ -57,10 +57,14 @@ import android.net.Uri;
 import android.view.View;
 import android.widget.TextView;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
     private FirebaseAuth mAuth;
+    private static final float DEFAULT_ZOOM = 15f;
 
     // For Location
     private static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
@@ -78,6 +82,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private static final long LONG_PRESS_DURATION = 3000; // 3 seconds
 
     private IntentIntegrator integrator;
+    private FloatingActionButton recenterMapFab;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,7 +112,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        recenterMapFab = findViewById(R.id.fab_recenter_map);
+
         setupUIListeners();
+
+        recenterMapFab.setOnClickListener(v -> recenterMapOnUserLocation());
+    }
+
+    private void recenterMapOnUserLocation() {
+        if (mMap != null && lastKnownLocation != null) {
+            LatLng userLocation = new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLocation, DEFAULT_ZOOM));
+            Toast.makeText(this, "Re-centering map...", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "Current location not available yet.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void setupUIListeners() {
@@ -187,6 +206,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+
+        mMap.getUiSettings().setMyLocationButtonEnabled(false);
 
         mMap.setInfoWindowAdapter(new CustomInfoWindowAdapter());
         mMap.setOnInfoWindowClickListener(new CustomInfoWindowClickListener());
@@ -358,34 +379,34 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void showSosOptionsDialog() {
-        // First, check if we have a location, as all options need it.
         if (lastKnownLocation == null) {
             Toast.makeText(this, "Cannot get current location. Please wait.", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Removed the "Send SMS Alert" option
+        // The main actions are now in this array
         final CharSequence[] options = {
                 "Send WhatsApp SOS",
-                "Call an Emergency Contact",
-                "Cancel"
+                "Call an Emergency Contact"
         };
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("SOS Options");
-        builder.setItems(options, (dialog, item) -> {
-            String selectedOption = options[item].toString();
-            if (selectedOption.equals("Send WhatsApp SOS")) {
-                // This calls your existing WhatsApp method
-                sendSosMessage();
-            } else if (selectedOption.equals("Call an Emergency Contact")) {
-                // This will call the updated method to show a list of contacts to call
-                showCallDialog();
-            } else if (selectedOption.equals("Cancel")) {
-                dialog.dismiss();
-            }
-        });
-        builder.show();
+        // Use MaterialAlertDialogBuilder for better styling
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("SOS Options")
+                .setItems(options, (dialog, item) -> {
+                    // This logic remains the same
+                    if (options[item].equals("Send WhatsApp SOS")) {
+                        sendSosMessage();
+                    } else if (options[item].equals("Call an Emergency Contact")) {
+                        showCallDialog();
+                    }
+                })
+                // Add a distinct "Cancel" button
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    // The listener can be null or just dismiss the dialog
+                    dialog.dismiss();
+                })
+                .show();
     }
 
     private void showCallDialog() {
