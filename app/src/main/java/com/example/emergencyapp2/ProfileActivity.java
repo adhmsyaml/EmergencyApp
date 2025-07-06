@@ -172,10 +172,24 @@ public class ProfileActivity extends AppCompatActivity implements EmergencyConta
 
     @Override
     public void onContactDelete(int position) {
-        emergencyContactList.remove(position);
-        contactsAdapter.notifyItemRemoved(position);
-        Toast.makeText(this, "Contact removed", Toast.LENGTH_SHORT).show();
-        isDataDirty = true;
+        // Get the contact to show its name in the dialog for better context
+        EmergencyContact contactToDelete = emergencyContactList.get(position);
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Delete Contact?")
+                .setMessage("Are you sure you want to delete " + contactToDelete.getName() + "?")
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    // User clicked Cancel, so just dismiss the dialog.
+                    dialog.dismiss();
+                })
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    // User confirmed the deletion, so proceed.
+                    emergencyContactList.remove(position);
+                    contactsAdapter.notifyItemRemoved(position);
+                    Toast.makeText(this, "Contact removed", Toast.LENGTH_SHORT).show();
+                    isDataDirty = true; // Mark that a change has been made
+                })
+                .show();
     }
 
     private void showContactsInfoDialog() {
