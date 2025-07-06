@@ -18,70 +18,34 @@
             android:textSize="32sp"
             android:textStyle="bold" />
 
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/profileUsername"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Username"
-                android:enabled="false"/>
+        <com.google.android.material.textfield.TextInputLayout style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="12dp">
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/profileUsername" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Username" android:enabled="false"/>
         </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/profileContact"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Contact Number"
-                android:inputType="phone"
-                android:enabled="false"/>
+        <com.google.android.material.textfield.TextInputLayout style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="12dp">
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/profileContact" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Contact Number" android:inputType="phone" android:enabled="false"/>
         </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/profileAddress"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Address"
-                android:enabled="false"/>
+        <com.google.android.material.textfield.TextInputLayout style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="12dp">
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/profileAddress" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Address" android:enabled="false"/>
         </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/profileBloodType"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Blood Type (e.g., A+)"
-                android:enabled="false"/>
-        </com.google.android.material.textfield.TextInputLayout>
+            android:text="Blood Type"
+            android:layout_marginStart="4dp"
+            android:layout_marginBottom="4dp"/>
+        <Spinner
+            android:id="@+id/profileBloodTypeSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/abc_spinner_mtrl_am_alpha"
+            android:enabled="false"/>
 
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/profileMedicalNotes"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Medical Notes (Allergies, etc.)"
-                android:enabled="false"/>
+        <com.google.android.material.textfield.TextInputLayout style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="12dp">
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/profileMedicalNotes" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Medical Notes (Allergies, etc.)" android:enabled="false"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -93,41 +57,18 @@
                 android:id="@+id/profileEmergencyContacts"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Emergency Contacts (e.g., 012345678,019876543)"
-                android:inputType="phone"
+                android:hint="Emergency Contacts (e.g., 012... , 019...)"
+                android:inputType="text"
                 android:enabled="false"/>
         </com.google.android.material.textfield.TextInputLayout>
-
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/editProfileButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:text="Edit" />
-
-            <Button
-                android:id="@+id/saveProfileButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Save"
-                android:visibility="gone"/> </LinearLayout>
-
-
-        <Button
-            android:id="@+id/logoutButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="Logout"
-            android:backgroundTint="@android:color/holo_red_light"/>
-
+            <Button android:id="@+id/editProfileButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginEnd="8dp" android:text="Edit" />
+            <Button android:id="@+id/saveProfileButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Save" android:visibility="gone"/>
+        </LinearLayout>
+        <Button android:id="@+id/logoutButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:text="Logout" android:backgroundTint="@android:color/holo_red_light"/>
     </LinearLayout>
 </ScrollView>

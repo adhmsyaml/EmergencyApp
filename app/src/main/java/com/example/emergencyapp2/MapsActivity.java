@@ -48,6 +48,10 @@ import okhttp3.Response;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
+import android.telephony.SmsManager;
+import android.util.Log;
+
+import com.example.emergencyapp2.BuildConfig;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -87,7 +91,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         // --- Initialize Places SDK ---
         // **IMPORTANT**: Your API key is in Maps_api.xml
-        String apiKey = getString(R.string.Maps_key);
+        String apiKey = BuildConfig.MAPS_API_KEY;
         if (!Places.isInitialized()) {
             Places.initialize(getApplicationContext(), apiKey);
         }
@@ -201,7 +205,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         Toast.makeText(this, "Searching for nearby " + placeType.replace('_', ' ') + "s...", Toast.LENGTH_SHORT).show();
 
-        String apiKey = getString(R.string.Maps_key);
+        String apiKey = BuildConfig.MAPS_API_KEY;
         String url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?" +
                 "location=" + lastKnownLocation.getLatitude() + "," + lastKnownLocation.getLongitude() +
                 "&radius=5000" + // 5km radius
@@ -303,40 +307,60 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     // --- SOS SMS Sending Logic ---
     private void sendSmsAlert() {
+        // First, check for SMS permission
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SEND_SMS}, 101);
-            return;
+            Toast.makeText(this, "SMS Permission is required to send SOS.", Toast.LENGTH_SHORT).show();
+            return; // Stop if permission is not granted
         }
 
+        // Second, ensure we have a location
         if (lastKnownLocation == null) {
-            Toast.makeText(this, "Cannot get current location for SOS.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Cannot get current location for SOS. Please wait.", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Fetch user data from Firestore to get emergency contacts
+        // Third, get profile data from Firestore
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         String userId = mAuth.getCurrentUser().getUid();
 
         db.collection("users").document(userId).get().addOnSuccessListener(documentSnapshot -> {
             if (documentSnapshot.exists()) {
                 String userName = documentSnapshot.getString("username");
-                String emergencyContacts = documentSnapshot.getString("emergencyContacts"); // Assuming contacts are stored as comma-separated string
+                // Assuming contacts are stored as a comma-separated string
+                String emergencyContactsStr = documentSnapshot.getString("emergencyContacts");
 
-                if (emergencyContacts != null && !emergencyContacts.isEmpty()) {
+                if (emergencyContactsStr != null && !emergencyContactsStr.trim().isEmpty()) {
                     String locationLink = "http://maps.google.com/maps?q=" + lastKnownLocation.getLatitude() + "," + lastKnownLocation.getLongitude();
-                    String message = "EMERGENCY SOS from " + userName + "! My current location is: " + locationLink;
+                    String message = "EMERGENCY SOS from " + (userName != null ? userName : "a user") + "! My current location is: " + locationLink;
 
-                    String[] contactNumbers = emergencyContacts.split(",");
+                    // Split the contacts string by commas
+                    String[] contactNumbers = emergencyContactsStr.split(",");
+                    int smsSentCount = 0;
+
                     for (String number : contactNumbers) {
-                        try {
-                            // Use SmsManager to send the SMS
-                            android.telephony.SmsManager smsManager = android.telephony.SmsManager.getDefault();
-                            smsManager.sendTextMessage(number.trim(), null, message, null, null);
-                        } catch (Exception e) {
-                            Log.e("SOS_SMS", "Failed to send SMS to " + number, e);
+                        // **THIS IS THE CRUCIAL FIX**
+                        // Clean the number: remove all non-digit characters (+, -, spaces)
+                        String cleanNumber = number.trim().replaceAll("[^0-9]", "");
+
+                        if (!cleanNumber.isEmpty()) {
+                            try {
+                                SmsManager smsManager = SmsManager.getDefault();
+                                smsManager.sendTextMessage(cleanNumber, null, message, null, null);
+                                smsSentCount++;
+                                Log.d("SOS_SMS", "Successfully sent SMS to " + cleanNumber);
+                            } catch (Exception e) {
+                                Log.e("SOS_SMS", "Failed to send SMS to " + cleanNumber, e);
+                            }
                         }
                     }
-                    Toast.makeText(this, "SOS Alert sent to emergency contacts!", Toast.LENGTH_LONG).show();
+
+                    if (smsSentCount > 0) {
+                        Toast.makeText(this, "SOS Alert sent to " + smsSentCount + " contact(s)!", Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(this, "Could not send SMS. Check contact numbers.", Toast.LENGTH_LONG).show();
+                    }
+
                 } else {
                     Toast.makeText(this, "No emergency contacts found in your profile.", Toast.LENGTH_LONG).show();
                 }
