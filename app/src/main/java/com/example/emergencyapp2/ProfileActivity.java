@@ -1,5 +1,6 @@
 package com.example.emergencyapp2;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
@@ -23,6 +24,9 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +46,7 @@ public class ProfileActivity extends AppCompatActivity implements EmergencyConta
     private RadioGroup genderRadioGroup;
     private RadioButton radioMale, radioFemale;
     private Button logoutButton, editProfileButton, saveProfileButton;
+    private GoogleSignInClient mGoogleSignInClient;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
     private DocumentReference userDocRef;
@@ -95,6 +100,20 @@ public class ProfileActivity extends AppCompatActivity implements EmergencyConta
         addContactButton.setOnClickListener(v -> addContact());
         genderRadioGroup.setOnCheckedChangeListener((group, checkedId) -> {
             isDataDirty = true;
+        });
+
+        // 1. Configure Google Sign-In
+        // Use the same options as in your LoginActivity
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build();
+
+        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
+
+        // 2. Set up the logout button click listener
+        logoutButton.setOnClickListener(v -> {
+            signOut();
         });
 
         setupRecyclerView(); // Call a new method to set up the list
@@ -155,6 +174,24 @@ public class ProfileActivity extends AppCompatActivity implements EmergencyConta
                     finish();
                 }
             }
+        });
+    }
+
+    private void signOut() {
+        // 1. Sign out from Firebase
+        mAuth.signOut();
+
+        // 2. Sign out from Google
+        // This will clear the account previously used to sign in
+        mGoogleSignInClient.signOut().addOnCompleteListener(this, task -> {
+            // After signing out from both, navigate back to the LoginActivity
+            Toast.makeText(ProfileActivity.this, "Signed out successfully", Toast.LENGTH_SHORT).show();
+            // FIX: Correct the context from the typo to ProfileActivity.this
+            Intent intent = new Intent(ProfileActivity.this, LoginActivity.class);
+            // Clear the activity stack to prevent the user from going back to the main screen
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
         });
     }
 
@@ -312,15 +349,20 @@ public class ProfileActivity extends AppCompatActivity implements EmergencyConta
                     address.setText(documentSnapshot.getString("address"));
                     medicalNotes.setText(documentSnapshot.getString("medicalNotes"));
                     emergencyContactList.clear(); // Clear the list before loading
-                    List<Map<String, Object>> contactsFromDb = (List<Map<String, Object>>) documentSnapshot.get("emergencyContacts");
-                    if (contactsFromDb != null) {
-                        for (Map<String, Object> contactMap : contactsFromDb) {
-                            emergencyContactList.add(new EmergencyContact(
-                                    (String) contactMap.get("name"),
-                                    (String) contactMap.get("number")
-                            ));
+                    Object contactsData = documentSnapshot.get("emergencyContacts");
+                    // Check if the data is actually a List before casting
+                    if (contactsData instanceof List) {
+                        List<Map<String, Object>> contactsFromDb = (List<Map<String, Object>>) contactsData;
+                        if (contactsFromDb != null) {
+                            for (Map<String, Object> contactMap : contactsFromDb) {
+                                emergencyContactList.add(new EmergencyContact(
+                                        (String) contactMap.get("name"),
+                                        (String) contactMap.get("number")
+                                ));
+                            }
                         }
                     }
+
                     contactsAdapter.notifyDataSetChanged(); // Refresh the entire list view
 
                     // Set spinner selection based on saved data
