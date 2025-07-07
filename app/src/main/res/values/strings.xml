@@ -1,5 +1,10 @@
 <resources>
     <string name="app_name">ReachOut</string>
     <string name="default_web_client_id">788813906068-vc4kdtc4tgddbja1gufa8jufa71prv48.apps.googleusercontent.com</string>
-    <string name="recenter_map">Recenter map</string>
+    <string name="recenter_map">Recenter Map</string>
+    <string name="open_profile_description">Open Profile</string>
+    <string name="open_camera_description">Open Camera</string>
+    <string name="send_sos_description">Send SOS</string>
+    <string name="find_nearby_places">Find Nearby Places</string>
+    <string name="scan_qr_code">Scan QR Code</string>
 </resources>

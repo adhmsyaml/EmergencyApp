@@ -16,6 +16,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -71,8 +72,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.widget.Toast;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
-
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, PlacesBottomSheetDialogFragment.OnPlaceTypeSelectedListener {
     private GoogleMap mMap;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
@@ -111,6 +111,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         setContentView(R.layout.activity_maps);
 
+        ImageButton profileButton = findViewById(R.id.profileButton);
+        ImageButton cameraButton = findViewById(R.id.cameraButton);
+        com.google.android.material.floatingactionbutton.FloatingActionButton sosButton = findViewById(R.id.sosButton);
+        findViewById(R.id.findNearbyButton).setOnClickListener(v -> {
+            PlacesBottomSheetDialogFragment bottomSheet = new PlacesBottomSheetDialogFragment();
+            bottomSheet.show(getSupportFragmentManager(), "PlacesBottomSheet");
+        });
+
+        profileButton.setOnClickListener(v -> {
+            startActivity(new Intent(MapsActivity.this, ProfileActivity.class));
+        });
+
+        cameraButton.setOnClickListener(v -> {
+            startActivity(new Intent(MapsActivity.this, CameraActivity.class));
+        });
+
+        sosButton.setOnClickListener(v -> {
+            // TODO: Implement your SOS alert logic here
+            Toast.makeText(this, "SOS Activated!", Toast.LENGTH_SHORT).show();
+        });
+
         // --- Initialize Places SDK ---
         // **IMPORTANT**: Your API key is in Maps_api.xml
         String apiKey = BuildConfig.MAPS_API_KEY;
@@ -132,6 +153,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         recenterMapFab.setOnClickListener(v -> recenterMapOnUserLocation());
     }
 
+    @Override
+    public void onPlaceTypeSelected(String placeType) {
+        // Now you can call your existing findNearbyPlaces method
+        findNearbyPlaces(placeType);
+    }
+
     private void recenterMapOnUserLocation() {
         if (mMap != null && lastKnownLocation != null) {
             LatLng userLocation = new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
@@ -144,26 +171,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void setupUIListeners() {
         // --- SOS Button ---
-        Button sosButton = findViewById(R.id.sosButton);
+        // Correctly declare the variable as a FloatingActionButton
+        com.google.android.material.floatingactionbutton.FloatingActionButton sosButton = findViewById(R.id.sosButton);
         sosButton.setOnClickListener(v -> Toast.makeText(MapsActivity.this, "Press and hold for 3 seconds to send SOS.", Toast.LENGTH_SHORT).show());
         sosButton.setOnLongClickListener(v -> {
             showSosOptionsDialog();
             return true;
         });
 
-
-        // --- Find Places Buttons ---
-        findViewById(R.id.findHospitalButton).setOnClickListener(v -> findNearbyPlaces("hospital"));
-        findViewById(R.id.findPoliceButton).setOnClickListener(v -> findNearbyPlaces("police"));
-        findViewById(R.id.findFireStationButton).setOnClickListener(v -> findNearbyPlaces("fire_station"));
-        findViewById(R.id.findPharmacyButton).setOnClickListener(v -> findNearbyPlaces("pharmacy"));
-
         // --- Bottom Nav Buttons ---
         findViewById(R.id.profileButton).setOnClickListener(v -> startActivity(new Intent(MapsActivity.this, ProfileActivity.class)));
-        // Other buttons remain for future implementation
-        findViewById(R.id.emergencyCameraButton).setOnClickListener(v -> {
-            startActivity(new Intent(MapsActivity.this, CameraActivity.class));
-        });
+        findViewById(R.id.cameraButton).setOnClickListener(v -> startActivity(new Intent(MapsActivity.this, CameraActivity.class)));
         findViewById(R.id.qrScanButton).setOnClickListener(v -> startQrScanner());
     }
 

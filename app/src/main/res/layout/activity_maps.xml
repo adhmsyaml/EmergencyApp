@@ -1,112 +1,100 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MapsActivity">
 
+    <!-- The map fragment fills the entire screen -->
     <fragment
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
-        android:id="@+id/sosButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true"
-        android:layout_marginTop="40dp"
-        android:layout_marginEnd="16dp"
-        android:text="SOS"
-        android:backgroundTint="@android:color/holo_red_dark"
-        android:textColor="@android:color/white"
-        android:textStyle="bold"/>
-
-    <LinearLayout
-        android:id="@+id/places_buttons_layout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_above="@id/bottom_nav_panel"
-        android:orientation="horizontal"
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp">
-
-        <Button
-            android:id="@+id/findHospitalButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textSize="10sp"
-            android:text="Hospital"/>
-        <Button
-            android:id="@+id/findPoliceButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textSize="10sp"
-            android:text="Police"/>
-        <Button
-            android:id="@+id/findFireStationButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textSize="10sp"
-            android:text="Fire"/>
-        <Button
-            android:id="@+id/findPharmacyButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textSize="10sp"
-            android:text="Pharmacy"/>
-    </LinearLayout>
-
+    <!-- FAB to re-center the map on the user's location -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_recenter_map"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_above="@id/places_buttons_layout"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="8dp"
-        android:src="@drawable/ic_my_location"
-        android:contentDescription="@string/recenter_map" />
+        android:layout_marginBottom="16dp"
+        android:contentDescription="Recenter Map"
+        app:fabSize="mini"
+        app:layout_constraintBottom_toTopOf="@+id/sosButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/ic_my_location" />
 
-    <LinearLayout
-        android:id="@+id/bottom_nav_panel"
-        android:layout_width="match_parent"
+    <!-- Main SOS Floating Action Button -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/sosButton"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:contentDescription="Send SOS"
+        app:layout_constraintBottom_toTopOf="@+id/bottom_action_bar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/ic_sos" />
+
+    <!-- Container for the bottom navigation buttons -->
+    <LinearLayout
+        android:id="@+id/bottom_action_bar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bottom_bar_background"
+        android:elevation="8dp"
         android:orientation="horizontal"
-        android:padding="8dp"
-        android:background="#80000000"
-        android:gravity="center">
+        android:paddingVertical="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
-        <Button
-            android:id="@+id/emergencyCameraButton"
+        <!-- Find Nearby Button -->
+        <ImageButton
+            android:id="@+id/findNearbyButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Camera"
-            android:layout_marginEnd="4dp"/>
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Find Nearby Places"
+            android:src="@drawable/ic_nearby" />
 
-        <Button
-            android:id="@+id/qrScanButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Scan QR"
-            android:layout_marginStart="4dp"/>
-
-        <Button
+        <!-- Profile Button -->
+        <ImageButton
             android:id="@+id/profileButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Profile"
-            android:layout_marginStart="4dp"/>
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Open Profile"
+            android:src="@drawable/ic_person" />
+
+        <!-- Camera Button -->
+        <ImageButton
+            android:id="@+id/cameraButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Open Camera"
+            android:src="@drawable/ic_camera" />
+
+        <!-- QR Scan Button -->
+        <ImageButton
+            android:id="@+id/qrScanButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Scan QR Code"
+            android:src="@drawable/ic_menu_qr" />
+
     </LinearLayout>
 
-</RelativeLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

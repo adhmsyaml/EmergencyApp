@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import android.widget.ImageButton;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
@@ -68,6 +69,14 @@ public class ProfileActivity extends AppCompatActivity implements EmergencyConta
 
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
+        // --- Toolbar Setup ---
+        Toolbar toolbar = findViewById(R.id.profileToolbar);
+        setSupportActionBar(toolbar);
+        // Add back arrow to toolbar
+        if (getSupportActionBar() != null){
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setDisplayShowHomeEnabled(true);
+        }
 
         // Initialize Views
         username = findViewById(R.id.profileUsername);
@@ -177,6 +186,12 @@ public class ProfileActivity extends AppCompatActivity implements EmergencyConta
         });
     }
 
+    // Handle the back arrow click
+    @Override
+    public boolean onSupportNavigateUp() {
+        onBackPressed();
+        return true;
+    }
     private void signOut() {
         // 1. Sign out from Firebase
         mAuth.signOut();
