@@ -111,8 +111,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         setContentView(R.layout.activity_maps);
 
-        ImageButton profileButton = findViewById(R.id.profileButton);
-        ImageButton cameraButton = findViewById(R.id.cameraButton);
+        View profileButton = findViewById(R.id.profileButton);
+        View cameraButton = findViewById(R.id.cameraButton);
         com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton sosButton = findViewById(R.id.sosButton);        findViewById(R.id.findNearbyButton).setOnClickListener(v -> {
             PlacesBottomSheetDialogFragment bottomSheet = new PlacesBottomSheetDialogFragment();
             bottomSheet.show(getSupportFragmentManager(), "PlacesBottomSheet");

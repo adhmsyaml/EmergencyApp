@@ -52,52 +52,131 @@
         android:background="@drawable/bottom_bar_background"
         android:elevation="8dp"
         android:orientation="horizontal"
-        android:paddingVertical="8dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
         <!-- Find Nearby Button -->
-        <ImageButton
+        <LinearLayout
             android:id="@+id/findNearbyButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Find Nearby Places"
-            android:src="@drawable/ic_nearby" />
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="4dp"
+            android:contentDescription="Find Nearby Places">
 
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@drawable/ic_nearby"
+                android:contentDescription="@null"
+                app:tint="@color/nav_nearby_color" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Nearby"
+                android:textSize="12sp"
+                android:textColor="@color/nav_nearby_color" />
+        </LinearLayout>
 
         <!-- Camera Button -->
-        <ImageButton
+        <LinearLayout
             android:id="@+id/cameraButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Open Camera"
-            android:src="@drawable/ic_camera" />
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="4dp"
+            android:contentDescription="Open Camera">
+
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@drawable/ic_camera"
+                android:contentDescription="@null"
+                app:tint="@color/nav_camera_color" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Camera"
+                android:textSize="12sp"
+                android:textColor="@color/nav_camera_color" />
+        </LinearLayout>
 
         <!-- QR Scan Button -->
-        <ImageButton
+        <LinearLayout
             android:id="@+id/qrScanButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Scan QR Code"
-            android:src="@drawable/ic_menu_qr" />
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="4dp"
+            android:contentDescription="Scan QR Code">
+
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@drawable/ic_menu_qr"
+                android:contentDescription="@null"
+                app:tint="@color/nav_qr_color" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Scan QR"
+                android:textSize="12sp"
+                android:textColor="@color/nav_qr_color" />
+        </LinearLayout>
 
         <!-- Profile Button -->
-        <ImageButton
+        <LinearLayout
             android:id="@+id/profileButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Open Profile"
-            android:src="@drawable/ic_person" />
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="4dp"
+            android:contentDescription="Open Profile">
+
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@drawable/ic_person"
+                android:contentDescription="@null"
+                app:tint="@color/nav_profile_color" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Profile"
+                android:textSize="12sp"
+                android:textColor="@color/nav_profile_color" />
+        </LinearLayout>
 
     </LinearLayout>
-
 </androidx.constraintlayout.widget.ConstraintLayout>
