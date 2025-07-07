@@ -26,21 +26,23 @@
         android:layout_marginBottom="16dp"
         android:contentDescription="Recenter Map"
         app:fabSize="mini"
-        app:layout_constraintBottom_toTopOf="@+id/sosButton"
+        app:layout_constraintBottom_toTopOf="@+id/bottom_action_bar"
         app:layout_constraintEnd_toEndOf="parent"
         app:srcCompat="@drawable/ic_my_location" />
 
     <!-- Main SOS Floating Action Button -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/sosButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
         android:contentDescription="Send SOS"
-        app:layout_constraintBottom_toTopOf="@+id/bottom_action_bar"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:srcCompat="@drawable/ic_sos" />
+        android:text="SOS"
+        app:backgroundTint="@color/sos_red"
+        app:icon="@drawable/ic_sos"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- Container for the bottom navigation buttons -->
     <LinearLayout
@@ -65,15 +67,6 @@
             android:contentDescription="Find Nearby Places"
             android:src="@drawable/ic_nearby" />
 
-        <!-- Profile Button -->
-        <ImageButton
-            android:id="@+id/profileButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Open Profile"
-            android:src="@drawable/ic_person" />
 
         <!-- Camera Button -->
         <ImageButton
@@ -94,6 +87,16 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Scan QR Code"
             android:src="@drawable/ic_menu_qr" />
+
+        <!-- Profile Button -->
+        <ImageButton
+            android:id="@+id/profileButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Open Profile"
+            android:src="@drawable/ic_person" />
 
     </LinearLayout>
 

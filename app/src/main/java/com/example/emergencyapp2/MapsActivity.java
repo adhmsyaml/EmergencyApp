@@ -113,8 +113,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         ImageButton profileButton = findViewById(R.id.profileButton);
         ImageButton cameraButton = findViewById(R.id.cameraButton);
-        com.google.android.material.floatingactionbutton.FloatingActionButton sosButton = findViewById(R.id.sosButton);
-        findViewById(R.id.findNearbyButton).setOnClickListener(v -> {
+        com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton sosButton = findViewById(R.id.sosButton);        findViewById(R.id.findNearbyButton).setOnClickListener(v -> {
             PlacesBottomSheetDialogFragment bottomSheet = new PlacesBottomSheetDialogFragment();
             bottomSheet.show(getSupportFragmentManager(), "PlacesBottomSheet");
         });
@@ -172,8 +171,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void setupUIListeners() {
         // --- SOS Button ---
         // Correctly declare the variable as a FloatingActionButton
-        com.google.android.material.floatingactionbutton.FloatingActionButton sosButton = findViewById(R.id.sosButton);
-        sosButton.setOnClickListener(v -> Toast.makeText(MapsActivity.this, "Press and hold for 3 seconds to send SOS.", Toast.LENGTH_SHORT).show());
+        com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton sosButton = findViewById(R.id.sosButton);        sosButton.setOnClickListener(v -> Toast.makeText(MapsActivity.this, "Press and hold for 3 seconds to send SOS.", Toast.LENGTH_SHORT).show());
         sosButton.setOnLongClickListener(v -> {
             showSosOptionsDialog();
             return true;
