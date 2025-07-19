@@ -3,8 +3,8 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="sos_red">#D32F2F</color>
-    <color name="nav_nearby_color">#2196F3</color>  <!-- Blue -->
-    <color name="nav_camera_color">#4CAF50</color>  <!-- Green -->
-    <color name="nav_qr_color">#9C27B0</color>      <!-- Purple -->
-    <color name="nav_profile_color">#FF9800</color> <!-- Orange -->
+    <color name="nav_nearby_color">#FF000000</color>  <!-- Blue -->
+    <color name="nav_camera_color">#FF000000</color>  <!-- Green -->
+    <color name="nav_qr_color">#FF000000</color>      <!-- Purple -->
+    <color name="nav_profile_color">#FF000000</color> <!-- Orange -->
 </resources>
